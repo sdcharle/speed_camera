@@ -6,7 +6,7 @@ library(lubridate)
 library(dplyr)
 library(RSQLite)
 library(DT)  # for rendering DataTables
-
+library(markdown)
 custom_theme <- theme_minimal() +
   theme(
     plot.title = element_text(size = 24),
