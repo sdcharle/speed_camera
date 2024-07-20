@@ -5,6 +5,8 @@ library(ggplot2)
 library(lubridate)
 library(dplyr)
 library(RSQLite)
+library(DT)  # for rendering DataTables
+
 custom_theme <- theme_minimal() +
   theme(
     plot.title = element_text(size = 24),
@@ -19,7 +21,7 @@ theme_set(custom_theme)
 
 server <- function(input, output, session) {
   # Connect to the database and load data
-  db_path <- "../data/speed_cam.db"
+  db_path <- "speed_cam.db"
   db <- RSQLite::dbConnect(RSQLite::SQLite(), dbname = db_path)
   
   speed_data <- odbc::dbGetQuery(db, 'select * from speed ') %>%
@@ -37,8 +39,48 @@ server <- function(input, output, session) {
   
   speed <- reactive({
     speed_data %>%
-      filter(speed_date >= ymd(input$start_date))
+      filter(speed_date >= ymd(input$start_date) & image_path != 'media/images/speed-20240711-0720/speed-98-20240711-1430377.jpg')
   })
+  # can you have 'chained reactive?'
+  
+  offenders_data <- reactive({
+    
+    req(speed())  # Ensure speed_data is available before processing
+    
+    speed() %>%
+      arrange(desc(ave_speed)) %>%
+      select(speed_date, ave_speed, image_path) %>%
+      rename(Date = speed_date, 
+             Speed = ave_speed) %>% 
+      head(10)
+    
+  })
+  
+
+  
+  # Render the offenders table
+  output$offendersTable <- renderDT({
+    datatable(offenders_data(), 
+              options = list(
+                dom = 'tip',  # Customize DataTable features if needed
+                paging = TRUE,
+                lengthMenu = c(5, 10, 15, 20),
+                pageLength = 10,
+                columnDefs = list(
+                  list(targets = 'Date', render = JS(
+                    "function(data, type, row, meta) {
+                     return type === 'display' && data != null ?
+                            new Date(data).toLocaleString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }) :
+                            data;
+                   }"))
+                )
+              ),
+              rownames = FALSE,  # Remove rownames
+              class = "cell-border stripe",
+              filter = "top"
+    )
+  })
+  
   
   output$hourly_plot <- renderPlot({
     ggplot(speed(), aes(x = hour(speed_date), group = hour(speed_date), y = ave_speed)) + 
