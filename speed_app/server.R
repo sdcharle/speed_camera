@@ -25,7 +25,15 @@ server <- function(input, output, session) {
   db <- RSQLite::dbConnect(RSQLite::SQLite(), dbname = db_path)
   
   speed_data <- odbc::dbGetQuery(db, 'select * from speed ') %>%
-    mutate(speed_date = ymd_hms(log_timestamp))
+    mutate(speed_date = ymd_hms(log_timestamp),
+           speed_hour = floor_date(speed_date, "hour"))
+  if(nrow(speed_data) > 0) {
+    last_date <- max(speed_data$speed_date, na.rm = TRUE)
+  } else {
+    last_date <- Sys.Date()
+  }
+  # Update end_date input to the last date in the data initially
+  updateDateInput(session, "end_date", value = last_date)
   
   # Get the range of dates from the data
   min_date <- ymd('2024-07-02') #min(speed_data$speed_date)
@@ -39,12 +47,10 @@ server <- function(input, output, session) {
   
   speed <- reactive({
     speed_data %>%
-<<<<<<< HEAD
       filter(speed_date >= ymd(input$start_date) &
-               speed_date <= ymd(input$end_date))
-=======
-      filter(speed_date >= ymd(input$start_date) & image_path != 'media/images/speed-20240711-0720/speed-98-20240711-1430377.jpg')
->>>>>>> a73b517025107196b5211bf2ad9812bfd3a7ec3b
+               speed_date <= ymd(input$end_date) &
+               image_path != 'media/images/speed-20240711-0720/speed-98-20240711-1430377.jpg')
+
   })
   # can you have 'chained reactive?'
   
@@ -61,7 +67,13 @@ server <- function(input, output, session) {
     
   })
   
-
+  all_hour_data <- reactive({
+    req(speed())
+    speed() %>%
+      group_by(speed_hour) %>% 
+      summarize(count = n(),
+                speed = mean(ave_speed))
+  })
   
   # Render the offenders table
   output$offendersTable <- renderDT({
@@ -103,6 +115,28 @@ server <- function(input, output, session) {
       labs(x = "", y = "Speed") + 
       geom_hline(yintercept = 30, color = "green", linetype = "dashed") +
       geom_hline(yintercept = 40, color = "red", linetype = "dashed") 
+  })
+  
+  output$all_counts_plot <- renderPlot({
+
+    # plot of vehicle counts start_date to end date.
+    ggplot(all_hour_data(), aes(x = speed_hour, y = count)) + 
+      geom_line() +
+      ggtitle("Vehicles per Hour") +
+      labs(x = "Hour", y = "Vehicles") +
+      scale_color_brewer(palette = "Set1")
+    
+  })
+  
+ output$all_speeds_plot <- renderPlot({
+    ggplot(all_hour_data() ,
+           aes(x = speed_hour, y = speed)) + 
+    geom_line() +
+    ggtitle("Speed Over Time") +
+    labs(x = "Hour", y = "Speed (MPH)") +
+    geom_hline(yintercept = 30, color = "green", linetype = "dashed") +
+    geom_hline(yintercept = 40, color = "red", linetype = "dashed") 
+    
   })
   
   output$normalized_counts_plot <- renderPlot({

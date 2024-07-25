@@ -27,6 +27,9 @@ ui <- fluidPage(
         tabPanel("Top 10 Offenders",
                  DTOutput("offendersTable")  
         ),
+        tabPanel("Long Term Plots",
+                 plotOutput("all_speeds_plot"),
+                 plotOutput("all_counts_plot")),
         tabPanel("About",     
                  includeMarkdown("about.md")
                  )
