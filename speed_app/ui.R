@@ -1,5 +1,5 @@
 library(shiny)
-
+library(DT)
 ui <- fluidPage(
   tags$head(
     tags$style(HTML("
@@ -21,11 +21,15 @@ ui <- fluidPage(
     
     mainPanel(
       tabsetPanel(
-        tabPanel("Hourly Speed Spread", plotOutput("hourly_plot")),
-        tabPanel("Daily Speed Spread", plotOutput("daily_plot")),
-        tabPanel("Vehicles Per Hour", plotOutput("normalized_counts_plot")),
-        tabPanel("About", p("This was made by Steve Charlesworth, a resident of Irasburg. (c) 2024 Good At Data, LLC"))
-        
+        tabPanel("Speed Spread", plotOutput("daily_plot"),plotOutput("hourly_plot")),
+        tabPanel("Vehicles Per Hour", plotOutput("normalized_counts_plot"),
+                 includeMarkdown('counts_commentary.md')),
+        tabPanel("Top 10 Offenders",
+                 DTOutput("offendersTable")  
+        ),
+        tabPanel("About",     
+                 includeMarkdown("about.md")
+                 )
       )
     )
   )

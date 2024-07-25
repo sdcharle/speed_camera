@@ -12,7 +12,7 @@ library(glue)
 library(readr)
 library(tidyr)
 # Jul 2 is when speed got dialed in
-db_path = "data/speed_cam.db"
+db_path = "speed_app/speed_cam.db"
 
 db <- RSQLite::dbConnect(RSQLite::SQLite(), 
                          dbname = db_path)
@@ -21,18 +21,29 @@ speed <- odbc::dbGetQuery(db, 'select * from speed ')
 speed <- speed %>% mutate(speed_date = ymd_hms(log_timestamp))
 
 begin_date = '2024-07-02'
+min_speed = 12
 
 speed <- speed %>% 
-  filter(speed_date >= ymd(begin_date))
+  filter(speed_date >= ymd(begin_date) & 
+           ave_speed >= min_speed & 
+           image_path != 'media/images/speed-20240711-0720/speed-98-20240711-1430377.jpg') 
 
-ggplot(speed, aes(x = ave_speed)) + geom_density() +   geom_vline(xintercept = 30, color = "green", linetype = "dashed", size = 1) +
+ggplot(speed, aes(x = ave_speed)) + 
+  #geom_histogram(bins = 1000) +  
+  geom_density() +
+  geom_vline(xintercept = 30, color = "green", linetype = "dashed", size = 1) +
   geom_vline(xintercept = 40, color = "red", linetype = "dashed", size = 1) +
   labs(title = "Density Plot of Average Speed", x = "Average Speed", y = "Density") +
   theme_minimal()
-ggplot(speed, aes(x = ave_speed)) + geom_boxplot()  + geom_vline(xintercept = 30, color = "green", linetype = "dashed", size = 1) +
+
+ggplot(speed, aes(x = ave_speed, group = direction, color = direction)) + 
+  geom_boxplot(notch = TRUE)  + 
+  geom_vline(xintercept = 30, color = "green", linetype = "dashed", size = 1) +
   geom_vline(xintercept = 40, color = "red", linetype = "dashed", size = 1) +
   labs(title = "Density Plot of Average Speed", x = "Average Speed", y = "Density") +
   theme_minimal()
+
+# oops L2R is slower (consistent with my findings)
 
 ggplot(speed, aes(x = m_area)) + geom_histogram()
 # area - 4000????
@@ -216,3 +227,12 @@ ggplot(normalized_speed_count, aes(x = hour_of_day, y = normalized_count, group 
   theme_minimal() +
   labs(x = "Hour of the Day", y = "Vehicles") +
   scale_color_brewer(palette = "Set1")
+
+
+top10 <- speed %>% 
+  arrange(desc(ave_speed)) %>% 
+  head(10) 
+
+top10 %>% select(log_timestamp, ave_speed, image_path, mw,mh)
+
+# woah wait 97.8 is a tractor?!?!?!?!?

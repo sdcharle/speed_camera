@@ -1,4 +1,4 @@
-library(shiny)
+renvlibrary(shiny)
 
 source("ui.R")
 source("server.R")
