@@ -37,7 +37,8 @@ server <- function(input, output, session) {
   
   speed <- reactive({
     speed_data %>%
-      filter(speed_date >= ymd(input$start_date))
+      filter(speed_date >= ymd(input$start_date) &
+               speed_date <= ymd(input$end_date))
   })
   
   output$hourly_plot <- renderPlot({

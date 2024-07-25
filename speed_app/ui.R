@@ -15,7 +15,8 @@ ui <- fluidPage(
   
   sidebarLayout(
     sidebarPanel(
-      dateInput("start_date", "Select Start Date:", value = "2024-07-02")
+      dateInput("start_date", "Select Start Date:", value = "2024-07-02"),
+      dateInput("end_date", "Select Start Date:", value = "2024-07-16")
     ),
     
     mainPanel(
