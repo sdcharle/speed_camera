@@ -71,3 +71,26 @@ ggplot(normalized_speed_count, aes(x = hour_of_day, y = normalized_count, group 
   theme_minimal() +
   labs(x = "Hour of the Day", y = "Vehicles") +
   scale_color_brewer(palette = "Set1")
+
+
+hour_count <-speed %>%
+  mutate(speed_hour = floor_date(speed_date, "hour")) %>% 
+  group_by(speed_hour) %>% 
+  summarize(count = n())
+
+
+# plot of vehicle counts start_date to end date.
+ggplot(hour_count, aes(x = speed_hour, y = count)) + 
+  geom_line() +
+  ggtitle("Vehicles per Hour") +
+  labs(x = "Hour", y = "Vehicles") +
+  scale_color_brewer(palette = "Set1")
+
+ggplot(speed %>% 
+         mutate(speed_hour = floor_date(speed_date, "hour")),
+       aes(x = speed_hour, y = ave_speed, group = speed_hour)) + 
+        geom_boxplot() +
+  ggtitle("Speed Over Time") +
+  labs(x = "Hour", y = "Speed (MPH)") 
+
+

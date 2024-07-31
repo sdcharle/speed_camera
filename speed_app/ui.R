@@ -15,7 +15,8 @@ ui <- fluidPage(
   
   sidebarLayout(
     sidebarPanel(
-      dateInput("start_date", "Select Start Date:", value = "2024-07-02")
+      dateInput("start_date", "Select Start Date:", value = "2024-07-02"),
+      dateInput("end_date", "Select Start Date:", value = "2024-07-16")
     ),
     
     mainPanel(
@@ -26,6 +27,9 @@ ui <- fluidPage(
         tabPanel("Top 10 Offenders",
                  DTOutput("offendersTable")  
         ),
+        tabPanel("Long Term Plots",
+                 plotOutput("all_speeds_plot"),
+                 plotOutput("all_counts_plot")),
         tabPanel("About",     
                  includeMarkdown("about.md")
                  )
